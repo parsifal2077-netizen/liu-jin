@@ -1,39 +1,17 @@
 (function () {
   window.__nightBoot = 1;
 
-  function joinParts(names) {
-    return Promise.all(names.map(function (name) {
-      return fetch("media/" + name).then(function (r) {
-        if (!r.ok) throw new Error(name);
-        return r.text();
-      });
-    })).then(function (parts) { return parts.join(""); });
-  }
-
-  function b64ToUrl(b64, type) {
-    var clean = b64.replace(/\s/g, "");
-    var bin = atob(clean);
-    var bytes = new Uint8Array(bin.length);
-    for (var i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
-    return URL.createObjectURL(new Blob([bytes], { type: type }));
-  }
-
-  function armSong() {
-    var box = document.getElementById("song-on");
-    var audio = document.getElementById("night-audio");
-    if (!box || !box.checked || !audio || !audio.getAttribute("src")) return;
-    audio.volume = 0.9;
-    var played = audio.play();
-    if (played && played.catch) played.catch(function () {});
-  }
-
   document.addEventListener("change", function (event) {
     var box = event.target;
-    if (!box || box.id !== "song-on") return;
     var audio = document.getElementById("night-audio");
-    if (!audio) return;
-    if (box.checked) armSong();
-    else audio.pause();
+    if (!box || box.id !== "song-on" || !audio) return;
+    if (box.checked) {
+      audio.volume = 0.9;
+      var played = audio.play();
+      if (played && played.catch) played.catch(function () {});
+    } else {
+      audio.pause();
+    }
   });
 
   document.addEventListener("submit", function (event) {
@@ -60,26 +38,10 @@
 
   window.addEventListener("load", function () {
     var saved = document.getElementById("wish-saved");
-    if (saved && !saved.textContent) {
-      try {
-        var list = JSON.parse(localStorage.getItem("liu-jin-night") || "[]");
-        if (Array.isArray(list) && list[0] && list[0].text) saved.textContent = list[0].text;
-      } catch (err) {}
-    }
-
-    fetch("manifest.json").then(function (r) { return r.json(); }).then(function (manifest) {
-      document.querySelectorAll("img[data-asset]").forEach(function (img) {
-        joinParts(manifest[img.getAttribute("data-asset")] || []).then(function (b64) {
-          img.src = b64ToUrl(b64, "image/jpeg");
-        });
-      });
-      joinParts(manifest.song || []).then(function (b64) {
-        var audio = document.getElementById("night-audio");
-        if (!audio) return;
-        audio.src = b64ToUrl(b64, "audio/mpeg");
-        audio.loop = true;
-        armSong();
-      });
-    });
+    if (!saved || saved.textContent) return;
+    try {
+      var list = JSON.parse(localStorage.getItem("liu-jin-night") || "[]");
+      if (Array.isArray(list) && list[0] && list[0].text) saved.textContent = list[0].text;
+    } catch (err) {}
   });
 })();
