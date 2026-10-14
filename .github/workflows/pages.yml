@@ -1,21 +1,8 @@
 name: pages
 on:
-  push:
-    branches: [main]
   workflow_dispatch:
-permissions:
-  contents: read
-  pages: write
-  id-token: write
-  administration: write
 jobs:
-  enable:
+  note:
     runs-on: ubuntu-latest
     steps:
-      - name: Turn on GitHub Pages from main
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          set +e
-          gh api --method POST -H "Accept: application/vnd.github+json"             "/repos/${{ github.repository }}/pages"             --raw-field build_type=legacy             --raw-field source='{"branch":"main","path":"/"}'
-          exit 0
+      - run: echo ok
