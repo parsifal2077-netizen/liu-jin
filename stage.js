@@ -3,7 +3,10 @@
 
   function joinParts(names) {
     return Promise.all(names.map(function (name) {
-      return fetch("media/" + name).then(function (r) { return r.text(); });
+      return fetch("media/" + name).then(function (r) {
+        if (!r.ok) throw new Error(name);
+        return r.text();
+      });
     })).then(function (parts) { return parts.join(""); });
   }
 
@@ -64,19 +67,19 @@
       } catch (err) {}
     }
 
-    document.querySelectorAll("img[data-b64]").forEach(function (img) {
-      var names = img.getAttribute("data-b64").split(/\s+/);
-      joinParts(names).then(function (b64) {
-        img.src = b64ToUrl(b64, "image/jpeg");
+    fetch("manifest.json").then(function (r) { return r.json(); }).then(function (manifest) {
+      document.querySelectorAll("img[data-asset]").forEach(function (img) {
+        joinParts(manifest[img.getAttribute("data-asset")] || []).then(function (b64) {
+          img.src = b64ToUrl(b64, "image/jpeg");
+        });
       });
-    });
-
-    joinParts(['song-0.b64', 'song-1.b64', 'song-2.b64', 'song-3.b64', 'song-4.b64']).then(function (b64) {
-      var audio = document.getElementById("night-audio");
-      if (!audio) return;
-      audio.src = b64ToUrl(b64, "audio/mpeg");
-      audio.loop = true;
-      armSong();
+      joinParts(manifest.song || []).then(function (b64) {
+        var audio = document.getElementById("night-audio");
+        if (!audio) return;
+        audio.src = b64ToUrl(b64, "audio/mpeg");
+        audio.loop = true;
+        armSong();
+      });
     });
   });
 })();
